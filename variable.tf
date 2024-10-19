@@ -34,11 +34,12 @@ variable "template" {
 
 variable "branches" {
   description = "(Optional) A list of branches to be created in this repository."
-   type = list(object({
+   /*type = list(object({
      name          = string
      source_branch = optional(string)
      source_sha    = optional(string)
-   }))
+   })a)*/
+  type = any
   default = []
 }
 

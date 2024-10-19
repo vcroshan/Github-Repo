@@ -39,10 +39,10 @@ locals {
 }
 
 resource "github_branch" "branch" {
-  for_each = local.branches_map
+  count = length(var.branches)
 
   repository    = github_repository.githubrepo.name
-  branch        = each.key
+  branch        = var.branches[count.index]
 }
 
 
