@@ -1,76 +1,58 @@
-variable "github_token" {
-  type    = string
-  default = ""
+terraform {
+  required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "~> 5.0"
+    }
+  }
 }
 
-variable "is_template" {
-  description = "(Optional) Whether or not to tell GitHub that this is a template repository. ( Default: false)"
-  type        = bool
+
+# Configure the GitHub Provider
+provider "github" {
+  token = var.github_token
+}
+data "github_repository" "github_repo" {
+  count = var.create_repo ? 0 : 1
+  full_name = var.name
 }
 
-variable "allowmergecommit" {
-  type    = bool
+locals {
+  template = var.template == null ? [] : [var.template]
+}
+resource "github_repository" "githubrepo" {
+  count = var.create_repo ? 1 : 0
+  name               = var.name
+  description        = "My awesome codebase"
+  is_template        = var.is_template
+  allow_merge_commit = var.allowmergecommit
+  gitignore_template = var.gitignore_template
+  visibility         = var.visibility
+  dynamic "template" {
+    for_each = local.template
+
+    content {
+      owner      = template.value.owner
+      repository = template.value.repository
+    }
+  }
 }
 
-variable "gitignore_template" {
-  description = "(Optional) Use the name of the template without the extension. For example, Haskell. Available templates: https://github.com/github/gitignore"
-  type        = string
-  default     = null
+locals {
+  branches_map = { for b in var.branches : b.name => b }
+  develop_branch = [ for k,v  in local.branches_map : k ]
 }
 
-variable "name" {
-  description = "(Required) The name of the repository."
-  type        = string
+resource "github_branch" "branch" {
+  for_each = local.branches_map
+
+  repository    = var.create_repo ? github_repository.githubrepo.name: data.github_repository.github_repo.name
+  branch        = each.key
 }
 
-variable "template" {
-  description = "(Optional) Template repository to use. (Default: {})"
-  type = object({
-    owner      = string
-    repository = string
-  })
-  default = null
-}
 
-variable "branches" {
-  description = "(Optional) A list of branches to be created in this repository."
-  /*type = list(object({
-    name          = string
-    source_branch = optional(string)
-    source_sha    = optional(string)
-  })a)*/
-  type = any
-  default = []
-}
-
-variable "admin_collaborators" {
-  description = "(Optional) A list of users to add as collaborators granting them admin (full) permission."
-  type        = list(string)
-  default     = []
-}
-
-variable "push_collaborators" {
-  description = "(Optional) A list of users to add as collaborators granting them push (read-write) permission."
-  type        = list(string)
-  default     = []
-}
-
-variable "pull_collaborators" {
-  description = "(Optional) A list of users to add as collaborators granting them pull (read-only) permission."
-  type        = list(string)
-  default     = []
-}
-variable "visibility" {
-  description = "(Optional) Can be 'public', 'private' or 'internal' "
-  type        = string
-  default     = null
-}
-
-variable "create_repo" {
-  type = bool
-  default = true
-}
-variable "set_default_branch" {
-  type    = bool
-  default = false
+resource "github_branch_default" "default"{
+  count = var.set_default_branch ? 1 : 0
+  repository = var.create_repo? github_repository.githubrepo.name: data.github_repository.github_repo.name
+  branch     = contains(local.develop_branch, "develop") ? "develop" : "main"
 }
