@@ -6,7 +6,7 @@ variable "github_token" {
 variable "is_template" {
   description = "(Optional) Whether or not to tell GitHub that this is a template repository. ( Default: false)"
   type        = bool
-  }
+}
 
 variable "allowmergecommit" {
   type    = bool
@@ -34,11 +34,11 @@ variable "template" {
 
 variable "branches" {
   description = "(Optional) A list of branches to be created in this repository."
-   /*type = list(object({
-     name          = string
-     source_branch = optional(string)
-     source_sha    = optional(string)
-   })a)*/
+  /*type = list(object({
+    name          = string
+    source_branch = optional(string)
+    source_sha    = optional(string)
+  })a)*/
   type = any
   default = []
 }
@@ -64,4 +64,13 @@ variable "visibility" {
   description = "(Optional) Can be 'public', 'private' or 'internal' "
   type        = string
   default     = null
+}
+
+variable "create_repo" {
+  type = bool
+  default = true
+}
+variable "set_default_branch" {
+  type    = bool
+  default = false
 }
