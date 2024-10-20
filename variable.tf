@@ -1,6 +1,5 @@
 variable "github_token" {
   type    = string
-  default = ""
 }
 
 variable "is_template" {

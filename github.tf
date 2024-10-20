@@ -13,8 +13,8 @@ provider "github" {
   token = var.github_token
 }
 data "github_repository" "github_repo" {
-  count = var.create_repo ? 0 : 1
-  full_name = var.name
+  count = var.create_repo == "true" ? 0 : 1
+  name = var.name
 }
 
 locals {
@@ -46,13 +46,16 @@ locals {
 resource "github_branch" "branch" {
   for_each = local.branches_map
 
-  repository    = var.create_repo ? github_repository.githubrepo.name: data.github_repository.github_repo.name
+  repository    = var.create_repo == "true" ? github_repository.githubrepo[0].name: data.github_repository.github_repo[0].name
   branch        = each.key
 }
 
 
+output "githubrepo" {
+value = data.github_repository.github_repo.*.name
+}
 resource "github_branch_default" "default"{
   count = var.set_default_branch ? 1 : 0
-  repository = var.create_repo? github_repository.githubrepo.name: data.github_repository.github_repo.name
+  repository = var.create_repo? github_repository.githubrepo[count.index].name: data.github_repository.github_repo[count.index].name
   branch     = contains(local.develop_branch, "develop") ? "develop" : "main"
 }
